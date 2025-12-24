@@ -6,6 +6,12 @@ A 4-layer neural network built entirely from scratch using NumPy for binary imag
 
 📊 **Monitoring Dashboard:** [cat-classifier-899084497532.asia-southeast1.run.app/dashboard](https://cat-classifier-899084497532.asia-southeast1.run.app/dashboard)
 
+## Media
+
+<img width="2560" height="1600" alt="Screenshot 2025-12-24 174143" src="https://github.com/user-attachments/assets/6833873b-e6d4-4081-a839-7fcf37ebcaad" />
+
+<img width="2560" height="1600" alt="Screenshot 2025-12-24 174131" src="https://github.com/user-attachments/assets/8f375a97-0516-40bb-b5f1-926010a6cec2" />
+
 ## Overview
 
 This project implements a deep neural network without using any deep learning frameworks. The model is deployed as a REST API with a web interface for image upload and a monitoring dashboard for tracking model performance.
