@@ -381,7 +381,6 @@
     </div>
 
     <script>
-        const API_URL = window.location.origin;
         let confidenceChart, predictionChart;
 
         // Initialize charts
@@ -453,7 +452,7 @@
         // Refresh data
         async function refreshData() {
             try {
-                const response = await fetch(`${API_URL}/api/monitor/report`);
+                const response = await fetch(`/api/monitor/report`);
                 const data = await response.json();
 
                 // Update summary cards
