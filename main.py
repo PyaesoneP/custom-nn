@@ -22,8 +22,8 @@ MODEL_PATH = Path("model/parameters.pkl")
 
 app = FastAPI(
     title="Cat Classifier API",
-    description="A 4-layer neural network that classifies images as cat or non-cat. Built from scratch with NumPy.",
-    version="1.0.0"
+    description="A CNN that classifies images as cat or non-cat. Built from scratch with NumPy.",
+    version="2.0.0"
 )
 
 # Allow CORS for frontend access
@@ -34,8 +34,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global parameters loaded at startup
+# Global parameters and architecture loaded at startup
 parameters = None
+architecture = None
 
 # --- Security: Rate Limiting (in-memory, per-IP) ---
 RATE_WINDOW = 60       # seconds
@@ -80,14 +81,24 @@ def _validate_image_magic(header: bytes) -> bool:
 
 @app.on_event("startup")
 def load_model():
-    global parameters
+    global parameters, architecture
     if not MODEL_PATH.exists():
         raise RuntimeError(f"Model not found at {MODEL_PATH}. Run save_model.py first.")
     
     with open(MODEL_PATH, "rb") as f:
-        parameters = pickle.load(f)
-    
-    print(f"Model loaded with {len(parameters) // 2} layers")
+        data = pickle.load(f)
+
+    if isinstance(data, tuple) and len(data) == 2:
+        parameters, architecture = data
+    else:
+        raise RuntimeError(
+            "Old DNN model detected. Please retrain with the CNN notebook."
+        )
+
+    # Count trainable layers for logging
+    n_layers = sum(1 for l in architecture if l["type"] in ("conv", "dense"))
+    total_params = sum(v.size for v in parameters.values())
+    print(f"CNN loaded: {n_layers} trainable layers, {total_params:,} parameters")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -174,12 +185,12 @@ async def predict_image(request: Request, file: UploadFile = File(...)):
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         image = image.resize((64, 64))
 
-        # Convert to numpy array and normalize
-        img_array = np.array(image)
-        img_flatten = img_array.reshape(-1, 1) / 255.0  # Shape: (12288, 1)
+        # Convert to numpy array and normalize — keep 4-D shape for CNN
+        img_array = np.array(image) / 255.0           # (64, 64, 3)
+        img_batch = img_array[np.newaxis, ...]         # (1, 64, 64, 3)
 
         # Predict
-        prediction, confidence = predict(img_flatten, parameters)
+        prediction, confidence = predict(img_batch, parameters, architecture)
         label = "cat" if prediction == 1 else "non-cat"
 
         # Calculate latency
@@ -191,7 +202,7 @@ async def predict_image(request: Request, file: UploadFile = File(...)):
             prediction=label,
             confidence=confidence,
             latency_ms=latency_ms,
-            input_data=img_flatten
+            input_data=img_batch
         )
 
         return {
