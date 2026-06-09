@@ -12,7 +12,7 @@ A deep CNN for binary image classification (cat vs non-cat). Built with NumPy: n
 
 ## Overview
 
-A deep neural network implemented from scratch using only NumPy. The model is served as a REST API with a browser interface for uploading images and a dashboard for tracking predictions in real time.
+A convolutional neural network built from scratch in pure NumPy with no frameworks. Features manual forward/backpropagation through Conv2D, MaxPool, and Dense layers, Adam optimisation with decoupled weight decay, and custom activations. Fully containerized and deployed with a FastAPI backend and live monitoring dashboard.
 
 ### Architecture
 
