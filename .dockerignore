@@ -10,3 +10,16 @@ venv
 datasets/
 *.ipynb
 .ipynb_checkpoints
+logs/
+*.jsonl
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+deploy/
+test_*.py
+.DS_Store
+Thumbs.db
+Dockerfile
+.dockerignore

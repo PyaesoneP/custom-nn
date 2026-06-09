@@ -1,0 +1,10 @@
+{
+    "liveServer.settings.ignoreFiles": [
+        "logs/**",
+        "**.jsonl",
+        "**/*.pkl",
+        "**/*.pyc",
+        "**/__pycache__/**",
+        ".venv/**"
+    ]
+}
