@@ -3,370 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cat Classifier</title>
+    <title>CAT / NOT CAT — Neural Classifier</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --black: #0a0a0a; --white: #fafafa; --red: #ff3b30;
+            --gray-900: #1a1a1a; --gray-800: #2a2a2a; --gray-700: #3a3a3a;
+            --gray-600: #555; --gray-400: #999; --gray-200: #ddd; --gray-100: #f0f0f0;
+            --mono: 'JetBrains Mono', 'Courier New', monospace;
+            --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --border-width: 3px;
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 600ms cubic-bezier(0.16, 1, 0.3, 1);
+            --noise-opacity: 0.03;
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 8px;
-            font-size: 2rem;
-        }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 0.95rem;
-        }
-
-        .upload-area {
-            border: 2px dashed #ddd;
-            border-radius: 16px;
-            padding: 40px 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 20px;
-        }
-
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-
-        .upload-area.dragover {
-            border-color: #667eea;
-            background: #f0f3ff;
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-
-        .upload-text {
-            color: #666;
-            font-size: 1rem;
-        }
-
-        .upload-text span {
-            color: #667eea;
-            font-weight: 600;
-        }
-
-        #file-input {
-            display: none;
-        }
-
-        .preview-container {
-            display: none;
-            margin-bottom: 20px;
-        }
-
-        .preview-container.show {
-            display: block;
-        }
-
-        .preview-image {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .file-name {
-            color: #666;
-            font-size: 0.85rem;
-            margin-top: 10px;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 14px 40px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .result {
-            display: none;
-            margin-top: 30px;
-            padding: 24px;
-            border-radius: 16px;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .result.show {
-            display: block;
-        }
-
-        .result.cat {
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-        }
-
-        .result.non-cat {
-            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-        }
-
-        .result-icon {
-            font-size: 64px;
-            margin-bottom: 12px;
-        }
-
-        .result-label {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #333;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .result-confidence {
-            color: #555;
-            margin-top: 8px;
-            font-size: 1rem;
-        }
-
-        .loading {
-            display: none;
-            margin-top: 20px;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 12px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .error {
-            background: #fee;
-            color: #c00;
-            padding: 16px;
-            border-radius: 12px;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .error.show {
-            display: block;
-        }
-
-        .footer {
-            margin-top: 30px;
-            color: #999;
-            font-size: 0.8rem;
-        }
-
-        .footer a {
-            color: #667eea;
-            text-decoration: none;
-        }
+        .preloader { position: fixed; inset: 0; z-index: 9999; background: var(--black); display: flex; align-items: center; justify-content: center; transition: opacity var(--transition-slow), visibility var(--transition-slow); will-change: opacity; }
+        .preloader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .preloader__content { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+        .preloader__label { font-family: var(--mono); font-size: clamp(10px, 1.5vw, 12px); color: var(--gray-600); letter-spacing: 4px; text-transform: uppercase; }
+        .preloader__bar-track { width: clamp(200px, 40vw, 320px); height: 4px; background: var(--gray-800); position: relative; overflow: hidden; }
+        .preloader__bar-fill { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: var(--white); transition: width 100ms linear; }
+        .preloader__percent { font-family: var(--mono); font-size: clamp(14px, 2vw, 18px); color: var(--gray-400); font-weight: 500; }
+        html { scroll-behavior: smooth; }
+        body { font-family: var(--sans); background: var(--black); color: var(--white); min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: clamp(12px, 2vw, 28px); position: relative; overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        body::after { content: ''; position: fixed; inset: 0; z-index: 9998; pointer-events: none; opacity: var(--noise-opacity); background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 256px 256px; }
+        .bg-grid { position: fixed; inset: 0; z-index: -1; pointer-events: none; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 64px 64px; }
+        .app { width: 100%; max-width: 960px; position: relative; z-index: 1; animation: cardEnter 0.8s var(--transition-slow) both; animation-play-state: paused; }
+        .app.visible { animation-play-state: running; }
+        @keyframes cardEnter { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        .card { background: var(--gray-900); border: var(--border-width) solid var(--gray-700); padding: clamp(32px, 4vw, 56px); position: relative; }
+        .card::before { content: ''; position: absolute; top: -1px; left: -1px; width: 24px; height: 24px; border-top: var(--border-width) solid var(--red); border-left: var(--border-width) solid var(--red); }
+        .card::after { content: ''; position: absolute; bottom: -1px; right: -1px; width: 24px; height: 24px; border-bottom: var(--border-width) solid var(--red); border-right: var(--border-width) solid var(--red); }
+        .header { margin-bottom: clamp(28px, 3vw, 44px); border-bottom: 2px solid var(--gray-800); padding-bottom: clamp(16px, 2vw, 28px); }
+        .header__eyebrow { font-family: var(--mono); font-size: clamp(9px, 1.2vw, 11px); letter-spacing: 5px; text-transform: uppercase; color: var(--red); margin-bottom: 16px; font-weight: 500; }
+        .header__title { font-family: var(--sans); font-size: clamp(3rem, 6vw, 6rem); font-weight: 900; line-height: 0.85; letter-spacing: -0.03em; text-transform: uppercase; color: var(--white); }
+        .header__title .char { display: inline-block; opacity: 0; transform: translateY(20px); animation: charReveal 0.5s var(--transition-slow) forwards; }
+        @keyframes charReveal { to { opacity: 1; transform: translateY(0); } }
+        .header__subtitle { font-family: var(--mono); font-size: clamp(11px, 1.4vw, 13px); color: var(--gray-400); margin-top: 12px; letter-spacing: 1px; opacity: 0; animation: fadeSlideUp 0.6s 0.3s var(--transition-slow) forwards; }
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(20px, 3vw, 32px); align-items: start; }
+        @media (max-width: 700px) { .content-grid { grid-template-columns: 1fr; } }
+        .upload-zone { border: 3px dashed var(--gray-600); padding: clamp(40px, 5vw, 64px) clamp(20px, 3vw, 40px); cursor: pointer; transition: border-color var(--transition-base), background var(--transition-base); position: relative; margin-bottom: 24px; text-align: center; will-change: transform; }
+        .upload-zone:hover { border-color: var(--white); background: rgba(255,255,255,0.02); }
+        .upload-zone.dragover { border-color: var(--red); border-style: solid; background: rgba(255,59,48,0.05); transform: scale(1.01); }
+        .upload-zone__icon { font-size: clamp(40px, 8vw, 56px); margin-bottom: 16px; display: block; transition: transform var(--transition-base); }
+        .upload-zone:hover .upload-zone__icon { transform: translateY(-4px); }
+        .upload-zone__text { font-family: var(--mono); font-size: clamp(12px, 1.5vw, 14px); color: var(--gray-400); letter-spacing: 0.5px; }
+        .upload-zone__text strong { color: var(--white); font-weight: 600; text-decoration: underline; text-decoration-color: var(--red); text-underline-offset: 4px; }
+        .upload-zone__hint { font-family: var(--mono); font-size: 10px; color: var(--gray-600); margin-top: 12px; letter-spacing: 2px; text-transform: uppercase; }
+        #file-input { display: none; }
+        .preview { display: none; margin-bottom: 24px; border: var(--border-width) solid var(--gray-700); position: relative; overflow: hidden; }
+        .preview.visible { display: block; animation: fadeSlideUp 0.4s var(--transition-base); }
+        .preview__image { width: 100%; max-height: 280px; object-fit: contain; background: var(--black); display: block; }
+        .preview__label { font-family: var(--mono); font-size: 11px; color: var(--gray-400); padding: 12px 16px; background: var(--gray-800); border-top: 2px solid var(--gray-700); letter-spacing: 1px; }
+        .preview__label::before { content: 'FILE: '; color: var(--gray-600); }
+        .btn { display: block; width: 100%; font-family: var(--mono); font-size: clamp(13px, 1.6vw, 15px); font-weight: 700; letter-spacing: 3px; text-transform: uppercase; padding: clamp(16px, 2.5vw, 20px) clamp(24px, 4vw, 40px); cursor: pointer; border: var(--border-width) solid var(--white); background: transparent; color: var(--white); position: relative; transition: background var(--transition-fast), color var(--transition-fast); will-change: transform; outline: none; }
+        .btn::before { content: ''; position: absolute; inset: 4px; border: 1px solid var(--gray-700); pointer-events: none; transition: border-color var(--transition-fast); }
+        .btn:hover:not(:disabled) { background: var(--white); color: var(--black); transform: translateY(-2px); }
+        .btn:hover:not(:disabled)::before { border-color: var(--white); }
+        .btn:active:not(:disabled) { transform: translateY(0); }
+        .btn:focus-visible { outline: 3px solid var(--red); outline-offset: 4px; }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; border-color: var(--gray-700); color: var(--gray-600); }
+        .btn:disabled::before { border-color: var(--gray-800); }
+        .loading { display: none; margin-top: 24px; padding: 20px; border: 2px solid var(--gray-800); text-align: center; }
+        .loading.visible { display: block; animation: fadeSlideUp 0.3s var(--transition-base); }
+        .loading__track { width: 100%; height: 4px; background: var(--gray-800); position: relative; overflow: hidden; margin-bottom: 12px; }
+        .loading__bar { position: absolute; top: 0; left: 0; height: 100%; width: 30%; background: var(--red); animation: loadingSlide 1.2s ease-in-out infinite; }
+        @keyframes loadingSlide { 0% { left: -30%; } 100% { left: 100%; } }
+        .loading__text { font-family: var(--mono); font-size: 11px; color: var(--gray-500); letter-spacing: 3px; text-transform: uppercase; }
+        .result { margin-top: 0; padding: clamp(24px, 3vw, 40px); border: 3px dashed var(--gray-700); position: relative; min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: border-color 0.3s var(--transition-base), background 0.3s var(--transition-base), border-style 0.3s; }
+        .result__empty { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .result__empty-icon { font-family: var(--mono); font-size: clamp(48px, 8vw, 80px); color: var(--gray-700); line-height: 1; }
+        .result__empty-text { font-family: var(--mono); font-size: clamp(12px, 1.5vw, 15px); color: var(--gray-600); letter-spacing: 4px; text-transform: uppercase; }
+        .result__content { display: none; flex-direction: column; align-items: center; width: 100%; }
+        .result.visible { border-style: solid; animation: resultSlam 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .result.visible .result__empty { display: none; }
+        .result.visible .result__content { display: flex; }
+        @keyframes resultSlam { 0% { opacity: 0; transform: scale(0.95); } 40% { opacity: 1; transform: scale(1.02); } 100% { opacity: 1; transform: scale(1); } }
+        .result--cat { border-color: #22c55e; background: rgba(34,197,94,0.05); }
+        .result--non-cat { border-color: var(--red); background: rgba(255,59,48,0.05); }
+        .result__verdict { font-family: var(--sans); font-size: clamp(3rem, 10vw, 6rem); font-weight: 900; line-height: 0.85; letter-spacing: -0.03em; text-transform: uppercase; }
+        .result--cat .result__verdict { color: #22c55e; }
+        .result--non-cat .result__verdict { color: var(--red); }
+        .result__icon { font-size: clamp(48px, 10vw, 80px); display: block; margin-bottom: 8px; line-height: 1; }
+        .result__meta { display: flex; gap: 24px; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--gray-800); }
+        .result__stat { flex: 1; }
+        .result__stat-label { font-family: var(--mono); font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 4px; }
+        .result__stat-value { font-family: var(--mono); font-size: clamp(14px, 2vw, 20px); font-weight: 700; color: var(--white); }
+        .error { display: none; margin-top: 24px; padding: 20px; border: var(--border-width) solid var(--red); background: rgba(255,59,48,0.05); font-family: var(--mono); font-size: 12px; color: var(--red); letter-spacing: 0.5px; }
+        .error.visible { display: block; animation: fadeSlideUp 0.3s var(--transition-base); }
+        .error::before { content: '! ERROR '; font-weight: 700; letter-spacing: 2px; }
+        .content-grid__right { display: flex; flex-direction: column; }
+        .footer { margin-top: clamp(24px, 4vw, 40px); padding-top: 20px; border-top: 2px solid var(--gray-800); display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; }
+        .footer__links { display: flex; gap: 24px; flex-wrap: wrap; }
+        .footer__link { font-family: var(--mono); font-size: 11px; color: var(--gray-500); text-decoration: none; letter-spacing: 1px; transition: color var(--transition-fast); position: relative; }
+        .footer__link:hover { color: var(--white); }
+        .footer__link::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 100%; height: 1px; background: var(--red); transform: scaleX(0); transform-origin: right; transition: transform var(--transition-base); }
+        .footer__link:hover::after { transform: scaleX(1); transform-origin: left; }
+        .footer__tag { font-family: var(--mono); font-size: 10px; color: var(--gray-600); letter-spacing: 2px; text-transform: uppercase; }
+        .cursor { position: fixed; width: 12px; height: 12px; border: 2px solid var(--red); border-radius: 50%; pointer-events: none; z-index: 10000; transform: translate(-50%, -50%); transition: width 0.2s, height 0.2s, border-color 0.2s; mix-blend-mode: difference; display: none; }
+        .cursor--hover { width: 32px; height: 32px; border-color: var(--white); }
+        @media (hover: hover) and (pointer: fine) { .cursor { display: block; } }
+        @media (max-width: 480px) { .card { padding: 20px 16px; } .header__title { font-size: 1.8rem; } .result__meta { flex-direction: column; gap: 12px; } .result__verdict { font-size: 2rem; } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } .preloader { display: none; } .cursor { display: none !important; } .header__title .char { opacity: 1; transform: none; animation: none; } .header__subtitle { opacity: 1; animation: none; } .app { animation: none; opacity: 1; } }
+        @media (hover: none) and (pointer: coarse) { .cursor { display: none !important; } .upload-zone:hover .upload-zone__icon { transform: none; } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🐱 Cat Classifier</h1>
-        <p class="subtitle">Upload an image to find out if it's a cat</p>
-
-        <div class="upload-area" id="upload-area">
-            <div class="upload-icon">📁</div>
-            <p class="upload-text">Drag & drop an image or <span>browse</span></p>
-            <input type="file" id="file-input" accept="image/jpeg,image/png">
+    <div class="preloader" id="preloader" role="status" aria-label="Loading">
+        <div class="preloader__content">
+            <div class="preloader__label">INITIALIZING</div>
+            <div class="preloader__bar-track"><div class="preloader__bar-fill" id="preloader-bar"></div></div>
+            <div class="preloader__percent" id="preloader-percent">0%</div>
         </div>
-
-        <div class="preview-container" id="preview-container">
-            <img id="preview-image" class="preview-image" src="" alt="Preview">
-            <p class="file-name" id="file-name"></p>
-        </div>
-
-        <button class="btn" id="classify-btn" disabled>Classify Image</button>
-
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Analyzing image...</p>
-        </div>
-
-        <div class="result" id="result">
-            <div class="result-icon" id="result-icon"></div>
-            <div class="result-label" id="result-label"></div>
-            <div class="result-confidence" id="result-confidence"></div>
-        </div>
-
-        <div class="error" id="error"></div>
-
-        <p class="footer">
-            Built with NumPy from scratch · 
-            <a href="/dashboard">📊 Monitoring Dashboard</a> · 
-            <a href="https://github.com/yourusername/deep-nn-from-scratch" target="_blank">GitHub</a>
-        </p>
     </div>
-
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="cursor" id="cursor" aria-hidden="true"></div>
+    <main class="app" id="app">
+        <div class="card">
+            <header class="header">
+                <div class="header__eyebrow">NEURAL NETWORK v1.0</div>
+                <h1 class="header__title" id="main-title">CAT /<br>NOT CAT</h1>
+                <p class="header__subtitle">4-layer NN · 12288 inputs · NumPy from scratch</p>
+            </header>
+            <div class="content-grid">
+                <div class="content-grid__left">
+            <div class="upload-zone" id="upload-zone" role="button" tabindex="0" aria-label="Upload an image file">
+                <span class="upload-zone__icon" aria-hidden="true">[ ↑ ]</span>
+                <p class="upload-zone__text"><strong>DROP IMAGE</strong> HERE OR <strong>CLICK</strong> TO BROWSE</p>
+                <p class="upload-zone__hint">JPEG / PNG — 64×64px input</p>
+                <input type="file" id="file-input" accept="image/jpeg,image/png" aria-hidden="true">
+            </div>
+            <div class="preview" id="preview">
+                <img id="preview-image" class="preview__image" src="" alt="Image preview">
+                <div class="preview__label" id="preview-label"></div>
+            </div>
+            <button class="btn" id="classify-btn" type="button" disabled>CLASSIFY IMAGE</button>
+            <div class="loading" id="loading" role="status" aria-label="Analyzing image">
+                <div class="loading__track"><div class="loading__bar"></div></div>
+                <p class="loading__text">Processing forward pass...</p>
+            </div>
+            <div class="error" id="error" role="alert"></div>
+                </div>
+                <div class="content-grid__right">
+            <div class="result" id="result" role="alert">
+                <div class="result__empty">
+                    <div class="result__empty-icon">[ ? ]</div>
+                    <div class="result__empty-text">AWAITING INPUT</div>
+                </div>
+                <div class="result__content">
+                <span class="result__icon" id="result-icon"></span>
+                <div class="result__verdict" id="result-verdict"></div>
+                <div class="result__meta">
+                    <div class="result__stat"><div class="result__stat-label">Confidence</div><div class="result__stat-value" id="result-confidence">—</div></div>
+                    <div class="result__stat"><div class="result__stat-label">Latency</div><div class="result__stat-value" id="result-latency">—</div></div>
+                </div>
+                </div>
+            </div>
+                </div>
+            </div>
+            <footer class="footer">
+                <div class="footer__links">
+                    <a href="/dashboard" class="footer__link" id="link-dashboard">MONITORING</a>
+                    <a href="/docs" class="footer__link" id="link-docs">API DOCS</a>
+                    <a href="https://github.com/pyaesonep/custom-nn" target="_blank" rel="noopener" class="footer__link">GITHUB</a>
+                </div>
+                <div class="footer__tag">BUILT FROM SCRATCH</div>
+            </footer>
+        </div>
+    </main>
     <script>
-        
-        const uploadArea = document.getElementById('upload-area');
-        const fileInput = document.getElementById('file-input');
-        const previewContainer = document.getElementById('preview-container');
-        const previewImage = document.getElementById('preview-image');
-        const fileName = document.getElementById('file-name');
-        const classifyBtn = document.getElementById('classify-btn');
-        const loading = document.getElementById('loading');
-        const result = document.getElementById('result');
-        const resultIcon = document.getElementById('result-icon');
-        const resultLabel = document.getElementById('result-label');
-        const resultConfidence = document.getElementById('result-confidence');
-        const error = document.getElementById('error');
-
-        let selectedFile = null;
-
-        // Click to upload
-        uploadArea.addEventListener('click', () => fileInput.click());
-
-        // Drag and drop
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                handleFile(file);
-            }
-        });
-
-        // File input change
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) {
-                handleFile(e.target.files[0]);
-            }
-        });
-
+    (function() {
+        const preloader = document.getElementById('preloader');
+        const preloaderBar = document.getElementById('preloader-bar');
+        const preloaderPercent = document.getElementById('preloader-percent');
+        const app = document.getElementById('app');
+        const cursor = document.getElementById('cursor');
+        const mainTitle = document.getElementById('main-title');
+        let progress = 0;
+        const preloadInterval = setInterval(function() {
+            progress += Math.random() * 15 + 5;
+            if (progress >= 100) { progress = 100; clearInterval(preloadInterval); preloaderBar.style.width = '100%'; preloaderPercent.textContent = '100%'; setTimeout(function() { preloader.classList.add('hidden'); app.classList.add('visible'); animateTitleChars(); }, 400); }
+            preloaderBar.style.width = progress + '%'; preloaderPercent.textContent = Math.round(progress) + '%';
+        }, 80);
+        function animateTitleChars() {
+            var text = mainTitle.textContent; mainTitle.textContent = '';
+            text.split('').forEach(function(char, i) { var span = document.createElement('span'); span.className = 'char'; span.textContent = char === ' ' ? '\u00A0' : char; span.style.animationDelay = (i * 40) + 'ms'; mainTitle.appendChild(span); });
+        }
+        var mouseX = 0, mouseY = 0, cursorX = 0, cursorY = 0;
+        document.addEventListener('mousemove', function(e) { mouseX = e.clientX; mouseY = e.clientY; });
+        function updateCursor() { cursorX += (mouseX - cursorX) * 0.15; cursorY += (mouseY - cursorY) * 0.15; cursor.style.left = cursorX + 'px'; cursor.style.top = cursorY + 'px'; requestAnimationFrame(updateCursor); }
+        requestAnimationFrame(updateCursor);
+        document.querySelectorAll('.btn:not(:disabled), .upload-zone, .footer__link, .preview').forEach(function(el) { el.addEventListener('mouseenter', function() { cursor.classList.add('cursor--hover'); }); el.addEventListener('mouseleave', function() { cursor.classList.remove('cursor--hover'); }); });
+        var uploadZone = document.getElementById('upload-zone');
+        var fileInput = document.getElementById('file-input');
+        var preview = document.getElementById('preview');
+        var previewImage = document.getElementById('preview-image');
+        var previewLabel = document.getElementById('preview-label');
+        var classifyBtn = document.getElementById('classify-btn');
+        var loadingEl = document.getElementById('loading');
+        var resultEl = document.getElementById('result');
+        var resultIcon = document.getElementById('result-icon');
+        var resultVerdict = document.getElementById('result-verdict');
+        var resultConfidence = document.getElementById('result-confidence');
+        var resultLatency = document.getElementById('result-latency');
+        var errorEl = document.getElementById('error');
+        // Determine API base URL: in dev (Live Server on :5500), point to FastAPI on :8080
+        var API_BASE = window.location.origin;
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            if (window.location.port !== '8080') { API_BASE = window.location.origin.replace(/:\d+$/, '') + ':8080'; }
+        }
+        // Fix nav links for dev cross-port setup
+        document.getElementById('link-dashboard').href = API_BASE + '/dashboard';
+        document.getElementById('link-docs').href = API_BASE + '/docs';
+        uploadZone.addEventListener('click', function() { fileInput.click(); });
+        uploadZone.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+        uploadZone.addEventListener('dragover', function(e) { e.preventDefault(); uploadZone.classList.add('dragover'); });
+        uploadZone.addEventListener('dragleave', function() { uploadZone.classList.remove('dragover'); });
+        uploadZone.addEventListener('drop', function(e) { e.preventDefault(); uploadZone.classList.remove('dragover'); var file = e.dataTransfer.files[0]; if (file && file.type.startsWith('image/')) handleFile(file); });
+        fileInput.addEventListener('change', function(e) { if (e.target.files[0]) handleFile(e.target.files[0]); });
         function handleFile(file) {
             selectedFile = file;
-            
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImage.src = e.target.result;
-                previewContainer.classList.add('show');
-            };
+            var reader = new FileReader();
+            reader.onload = function(e) { previewImage.src = e.target.result; preview.classList.add('visible'); };
             reader.readAsDataURL(file);
-            
-            fileName.textContent = file.name;
+            previewLabel.textContent = file.name;
             classifyBtn.disabled = false;
-            
-            // Hide previous results
-            result.classList.remove('show', 'cat', 'non-cat');
-            error.classList.remove('show');
+            resultEl.classList.remove('visible', 'result--cat', 'result--non-cat');
+            errorEl.classList.remove('visible');
         }
-
-        // Classify button
-        classifyBtn.addEventListener('click', async () => {
-            if (!selectedFile) return;
-
-            // UI state
-            classifyBtn.disabled = true;
-            loading.classList.add('show');
-            result.classList.remove('show');
-            error.classList.remove('show');
-
-            try {
-                const formData = new FormData();
-                formData.append('file', selectedFile);
-
-                const response = await fetch(`/predict`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.detail || 'Prediction failed');
-                }
-
-                const data = await response.json();
-                
-                // Show result
-                const isCat = data.prediction === 'cat';
-                resultIcon.textContent = isCat ? '🐱' : '🚫';
-                resultLabel.textContent = data.prediction;
-                resultConfidence.textContent = `${(data.confidence * 100).toFixed(1)}% confidence`;
-                
-                result.classList.remove('cat', 'non-cat');
-                result.classList.add('show', isCat ? 'cat' : 'non-cat');
-
-            } catch (err) {
-                error.textContent = `Error: ${err.message}`;
-                error.classList.add('show');
-            } finally {
-                loading.classList.remove('show');
-                classifyBtn.disabled = false;
-            }
+        classifyBtn.addEventListener('mousemove', function(e) {
+            if (classifyBtn.disabled) return;
+            var rect = classifyBtn.getBoundingClientRect();
+            var x = e.clientX - rect.left - rect.width / 2;
+            var y = e.clientY - rect.top - rect.height / 2;
+            classifyBtn.style.transform = 'translate(' + (x * 6 / (rect.width/2)) + 'px, ' + (y * 6 / (rect.height/2)) + 'px)';
         });
+        classifyBtn.addEventListener('mouseleave', function() { if (!classifyBtn.disabled) classifyBtn.style.transform = ''; });
+        classifyBtn.addEventListener('click', function() {
+            if (!selectedFile) return;
+            classifyBtn.disabled = true; classifyBtn.style.transform = '';
+            loadingEl.classList.add('visible');
+            resultEl.classList.remove('visible', 'result--cat', 'result--non-cat');
+            errorEl.classList.remove('visible');
+            var formData = new FormData(); formData.append('file', selectedFile);
+            fetch(API_BASE + '/predict', { method: 'POST', body: formData })
+                .then(function(response) {
+                    return response.text().then(function(raw) {
+                        var data;
+                        try { data = JSON.parse(raw); } catch (e) {
+                            console.error('Predict response was not valid JSON:', raw.substring(0, 200));
+                            throw new Error('Server returned an invalid response. Check console for details.');
+                        }
+                        if (!response.ok) throw new Error(data.detail || 'Prediction failed (HTTP ' + response.status + ')');
+                        return data;
+                    });
+                })
+                .then(function(data) {
+                    var isCat = data.prediction === 'cat';
+                    resultIcon.textContent = isCat ? 'CAT' : 'NOT';
+                    resultVerdict.textContent = isCat ? "IT'S A CAT" : 'NOT A CAT';
+                    resultConfidence.textContent = (data.confidence * 100).toFixed(1) + '%';
+                    resultLatency.textContent = data.latency_ms + 'ms';
+                    resultEl.classList.remove('result--cat', 'result--non-cat');
+                    resultEl.classList.add('visible', isCat ? 'result--cat' : 'result--non-cat');
+                })
+                .catch(function(err) {
+                    console.error('Predict error:', err);
+                    errorEl.textContent = err.message || 'Unknown error';
+                    errorEl.classList.add('visible');
+                })
+                .finally(function() { loadingEl.classList.remove('visible'); classifyBtn.disabled = false; });
+        });
+        document.addEventListener('keydown', function(e) { if (e.ctrlKey && e.key === 'v') { var items = (e.clipboardData || window.clipboardData).items; if (items) { for (var i = 0; i < items.length; i++) { if (items[i].type.startsWith('image/')) { e.preventDefault(); handleFile(items[i].getAsFile()); break; } } } } });
+    })();
     </script>
 </body>
 </html>
