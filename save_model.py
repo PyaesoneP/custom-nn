@@ -1,45 +1,66 @@
 """
-Run this script after training to save the model parameters.
+Save and load trained CNN model (parameters + architecture).
 
 Usage:
-    1. Train your model in the notebook
+    1. Train your model in the notebook.
     2. Add this cell at the end:
-    
-        import pickle
-        with open("model/parameters.pkl", "wb") as f:
-            pickle.dump(parameters, f)
-        print("Model saved!")
 
-Or run this script if parameters are in memory.
+        from save_model import save_model
+        save_model(parameters, architecture)
 """
 
 import pickle
 from pathlib import Path
 
-def save_parameters(parameters, path="model/parameters.pkl"):
-    """Save trained parameters to disk."""
+
+def save_model(parameters, architecture, path="model/parameters.pkl"):
+    """Save trained parameters and architecture to disk."""
     Path(path).parent.mkdir(exist_ok=True)
-    
+
+    bundle = (parameters, architecture)
     with open(path, "wb") as f:
-        pickle.dump(parameters, f)
-    
-    print(f"Parameters saved to {path}")
-    print(f"Layers: {len(parameters) // 2}")
-    for key in sorted(parameters.keys()):
-        print(f"  {key}: {parameters[key].shape}")
+        pickle.dump(bundle, f)
+
+    print(f"Model saved to {path}")
+    _print_params(parameters)
 
 
-def load_parameters(path="model/parameters.pkl"):
-    """Load parameters from disk."""
+def load_model(path="model/parameters.pkl"):
+    """
+    Load model from disk.
+
+    Returns
+    -------
+    parameters : dict
+    architecture : list of layer-spec dicts
+    """
     with open(path, "rb") as f:
-        return pickle.load(f)
+        data = pickle.load(f)
+
+    if isinstance(data, tuple) and len(data) == 2:
+        parameters, architecture = data
+    else:
+        raise RuntimeError(
+            "Old model format detected (DNN parameters only). "
+            "Please retrain the CNN model."
+        )
+
+    return parameters, architecture
+
+
+def _print_params(parameters):
+    """Print model parameter summary."""
+    trainable = {k: v for k, v in sorted(parameters.items())}
+    total = sum(v.size for v in trainable.values())
+    print(f"Trainable parameters: {total:,}")
+    for key in sorted(parameters.keys()):
+        print(f"  {key:12s}  {str(parameters[key].shape):20s}")
 
 
 if __name__ == "__main__":
-    # Example: verify saved model
     try:
-        params = load_parameters()
+        params, arch = load_model()
         print("Model loaded successfully!")
-        print(f"Layers: {len(params) // 2}")
+        _print_params(params)
     except FileNotFoundError:
-        print("No saved model found. Train the model first and save parameters.")
+        print("No saved model found. Train the model first.")
