@@ -1,12 +1,14 @@
 # Deep Neural Network from Scratch
 
-A 4-layer neural network built entirely from scratch using NumPy for binary image classification (cat vs non-cat). Deployed as a full-stack web application with real-time monitoring.
+A 4-layer neural network for binary image classification (cat vs non-cat). Built with NumPy. No deep learning frameworks. Deployed as a web app with live monitoring.
 
-🔗 **Live Demo:** [cat-classifier-899084497532.asia-southeast1.run.app](https://cat-classifier-899084497532.asia-southeast1.run.app)
+**Live Demo:** [cat-classifier-899084497532.asia-southeast1.run.app](https://cat-classifier-899084497532.asia-southeast1.run.app)
 
-📊 **Monitoring Dashboard:** [cat-classifier-899084497532.asia-southeast1.run.app/dashboard](https://cat-classifier-899084497532.asia-southeast1.run.app/dashboard)
+**Monitoring Dashboard:** [cat-classifier-899084497532.asia-southeast1.run.app/dashboard](https://cat-classifier-899084497532.asia-southeast1.run.app/dashboard)
 
 ## Media
+
+<!-- Screenshots need updating to reflect current Editorial Brutalism redesign -->
 
 <img width="2560" height="1600" alt="Screenshot 2025-12-24 174143" src="https://github.com/user-attachments/assets/6833873b-e6d4-4081-a839-7fcf37ebcaad" />
 
@@ -14,34 +16,61 @@ A 4-layer neural network built entirely from scratch using NumPy for binary imag
 
 ## Overview
 
-This project implements a deep neural network without using any deep learning frameworks. The model is deployed as a REST API with a web interface for image upload and a monitoring dashboard for tracking model performance.
+A deep neural network implemented from scratch using only NumPy. The model is served as a REST API with a browser interface for uploading images and a dashboard for tracking predictions in real time.
 
 ### Architecture
 
 ```
-Input (12288) → Dense (20, ReLU) → Dense (7, ReLU) → Dense (5, ReLU) → Output (1, Sigmoid)
+Input (12288) -> Dense (20, ReLU) -> Dense (7, ReLU) -> Dense (5, ReLU) -> Output (1, Sigmoid)
 ```
+
+### How It Works
+
+**Forward propagation** for each layer l:
+- Z[l] = W[l] * A[l-1] + b[l]
+- A[l] = g(Z[l])
+
+**Backpropagation** via chain rule:
+- dW[l] = (1/m) * dZ[l] * A[l-1]^T
+- db[l] = (1/m) * sum(dZ[l])
+- dA[l-1] = W[l]^T * dZ[l]
 
 ## Features
 
 ### Neural Network (from scratch)
 - Forward propagation with vectorized operations
-- Backpropagation with gradient computation  
+- Backpropagation with gradient computation
 - He initialization for weights
 - Gradient descent optimization
 - Binary cross-entropy loss
 
-### Web Application
-- Drag & drop image upload
-- Real-time prediction with confidence scores
-- Responsive design
+### Web Interface
+- Editorial Brutalism design: dark theme, high contrast, sharp typography
+- Two-column layout on desktop (upload left, result right)
+- Drag and drop upload, paste to upload (Ctrl+V), and click to browse
+- Real-time prediction with confidence score and latency display
+- Title character reveal animation on load
+- Magnetic button and custom cursor
+- SVG noise texture overlay
+- Preloader with progress bar
+- Respects `prefers-reduced-motion`; full keyboard navigation
 
 ### Monitoring Dashboard
 - Prediction counts and cat/non-cat ratio
-- Latency metrics (avg, P50, P95, P99)
-- Confidence score distribution
-- Data drift detection
-- Recent predictions log
+- Latency percentiles (avg, P50, P95, P99) with color-coded bars
+- Confidence distribution (bar chart) and prediction breakdown (doughnut chart)
+- Data drift detection with baseline comparison
+- Recent predictions log, auto-refreshes every 5 seconds
+- Chart.js with brutalist dark theme
+
+### Security
+- **Rate limiting**: 30 POST requests per 60 seconds per IP
+- **File size cap**: 5 MB maximum
+- **Magic byte validation**: type checked by file headers, not MIME
+- **No stack traces**: generic error messages only
+- **XSS protection**: `textContent` rendering for user-provided data
+- **Non-root container**: `USER app`, HEALTHCHECK, `.dockerignore`
+- **Opt-in auth**: set `MONITORING_TOKEN` to protect dashboard endpoints
 
 ## Tech Stack
 
@@ -60,13 +89,17 @@ Input (12288) → Dense (20, ReLU) → Dense (7, ReLU) → Dense (5, ReLU) → O
 ```
 ├── custom-nn.ipynb     # Training notebook
 ├── utils.py            # Core neural network functions
-├── main.py             # FastAPI application
+├── main.py             # FastAPI application (rate-limited, secured)
 ├── inference.py        # Model inference functions
-├── monitoring.py       # Performance tracking
-├── index.html          # Frontend UI
+├── monitoring.py       # Performance tracking and drift detection
+├── save_model.py       # Model serialization
+├── index.html          # Classifier UI (Editorial Brutalism design)
 ├── dashboard.html      # Monitoring dashboard
-├── Dockerfile
+├── Dockerfile          # Non-root container with HEALTHCHECK
+├── .dockerignore
 ├── requirements.txt
+├── datasets/           # Training/test data (HDF5)
+├── logs/               # Prediction log (JSONL)
 └── model/
     └── parameters.pkl  # Trained model weights
 ```
@@ -80,26 +113,18 @@ Input (12288) → Dense (20, ReLU) → Dense (7, ReLU) → Dense (5, ReLU) → O
 ### Run Locally
 
 ```bash
-# Clone the repo
 git clone https://github.com/pyaesonep/custom-nn.git
 cd custom-nn
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run the server
 python main.py
 ```
 
-Visit `http://localhost:8080`
+Open `http://localhost:8080`
 
 ### Run with Docker
 
 ```bash
-# Build
 docker build -t cat-classifier .
-
-# Run
 docker run -p 8080:8080 cat-classifier
 ```
 
@@ -107,29 +132,36 @@ docker run -p 8080:8080 cat-classifier
 
 ### Deploy to Cloud Run via Docker Hub
 
-1. **Build and push to Docker Hub:**
+1. Build and push:
 ```bash
 docker build -t yourusername/cat-classifier:latest .
 docker push yourusername/cat-classifier:latest
 ```
 
-2. **Deploy on Cloud Run Console:**
+2. Deploy on Cloud Run:
    - Go to [Cloud Run Console](https://console.cloud.google.com/run)
-   - Click "Create Service"
-   - Select "Deploy from existing container image"
-   - Enter: `docker.io/yourusername/cat-classifier:latest`
-   - Set region and allow unauthenticated access
-   - Deploy
+   - Click "Create Service", select "Deploy from existing container image"
+   - Enter `docker.io/yourusername/cat-classifier:latest`
+   - Set region, allow unauthenticated access, deploy
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/` | Web interface |
+| GET | `/` | Classifier web interface |
 | GET | `/dashboard` | Monitoring dashboard |
 | GET | `/health` | Health check |
-| POST | `/predict` | Upload image for classification |
-| GET | `/api/monitor/report` | Full monitoring metrics |
+| GET | `/predict` | Redirects to classifier |
+| POST | `/predict` | Classify an image (rate-limited, 5 MB max) |
+| GET | `/docs` | Swagger API docs |
+| GET | `/api/monitor/report` | Full monitoring report |
+| GET | `/api/monitor/summary` | Prediction summary |
+| GET | `/api/monitor/performance` | Latency and throughput |
+| GET | `/api/monitor/confidence` | Confidence distribution |
+| GET | `/api/monitor/drift` | Drift metrics |
+| GET | `/api/monitor/recent` | Recent predictions |
+
+> Rate limit: 30 POST requests per 60 seconds per IP (returns `429`). File limit: 5 MB (returns `413`).
 
 ## Results
 
@@ -139,24 +171,9 @@ docker push yourusername/cat-classifier:latest
 | Test Accuracy | ~80% |
 | Avg Latency | <50ms |
 
-## How It Works
-
-### Forward Propagation
-
-For each layer l:
-- Z[l] = W[l] · A[l-1] + b[l]
-- A[l] = g(Z[l])
-
-### Backpropagation
-
-Gradients computed via chain rule:
-- dW[l] = (1/m) · dZ[l] · A[l-1]ᵀ
-- db[l] = (1/m) · Σ dZ[l]
-- dA[l-1] = W[l]ᵀ · dZ[l]
-
 ## Acknowledgments
 
-This project was completed as part of the [Deep Learning Specialization](https://www.deeplearning.ai/courses/deep-learning-specialization/) by DeepLearning.AI on Coursera. The neural network implementation is based on the course assignments.
+Built as part of the [Deep Learning Specialization](https://www.deeplearning.ai/courses/deep-learning-specialization/) by DeepLearning.AI on Coursera. The neural network implementation follows the course assignments.
 
 ## License
 
