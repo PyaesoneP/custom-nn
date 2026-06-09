@@ -13,9 +13,18 @@ Provides:
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
-import h5py
 from PIL import Image, ImageEnhance
+
+# Optional imports — only needed for training, not for inference
+try:
+    import h5py
+except ImportError:
+    h5py = None
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
 
 
 # =============================================================================
@@ -56,6 +65,11 @@ def relu_backward(dA, cache):
 
 def load_data():
     """Load cat / non-cat dataset from HDF5 files."""
+    if h5py is None:
+        raise ImportError(
+            "h5py is required for load_data(). "
+            "Install it with: pip install h5py"
+        )
     train_ds = h5py.File('datasets/train_catvnoncat.h5', "r")
     train_x = np.array(train_ds["train_set_x"][:])
     train_y = np.array(train_ds["train_set_y"][:])
@@ -907,6 +921,10 @@ def print_mislabeled_images(classes, X, y, p):
     X : (m, 64, 64, 3)  or  (12288, m)  (tries to handle both)
     y, p : (1, m)
     """
+    if plt is None:
+        print("matplotlib not available — skipping mislabeled image plot.")
+        return
+
     # Support both (m,H,W,C) and (features,m) shapes
     if X.ndim == 4:
         X_disp = X
